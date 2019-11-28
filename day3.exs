@@ -27,15 +27,15 @@ defmodule DayThree do
     end
 
     def create_map_entries({id, {x, y}, {w, h}}) do
-        for j <- (y + 1)..(y + h), i <- (x + 1)..(x + w), do: {id, i, j} 
+        for j <- (y + 1)..(y + h), i <- (x + 1)..(x + w), do: {id, {i, j}} 
     end
 
     def make_claim_map(entries) do
         entries
-        |> Enum.reduce(%{}, fn {x,y}, acc -> cond do
+        |> Enum.reduce(%{}, fn {id, {x,y}}, acc -> cond do
             get_in(acc, [Access.key(x, %{}), Access.key(y)]) == nil ->
-                put_in(acc, [Access.key(x, %{}), Access.key(y)], "#")
-            get_in(acc, [Access.key(x, %{}), Access.key(y)]) == "#" ->
+                put_in(acc, [Access.key(x, %{}), Access.key(y)], id)
+            get_in(acc, [Access.key(x, %{}), Access.key(y)]) != "X" ->
                 put_in(acc, [Access.key(x, %{}), Access.key(y)], "X")
             get_in(acc, [Access.key(x, %{}), Access.key(y)]) == "X" ->
                 put_in(acc, [Access.key(x, %{}), Access.key(y)], "X")
@@ -64,22 +64,23 @@ defmodule DayTwoTest do
 
     test "should create map entries from parse claim data" do
         data = {1, {3, 2}, {5, 4}}
-        assert create_map_entries(data) == [{4,3}, {5,3}, {6,3}, {7,3}, {8,3},
-                                    {4,4}, {5,4}, {6,4}, {7,4}, {8,4},
-                                    {4,5}, {5,5}, {6,5}, {7,5}, {8,5},
-                                    {4,6}, {5,6}, {6,6}, {7,6}, {8,6}]
+        assert create_map_entries(data) == [{1,{4,3}}, {1,{5,3}}, {1,{6,3}}, {1,{7,3}}, {1,{8,3}},
+            {1,{4,4}}, {1,{5,4}}, {1,{6,4}}, {1,{7,4}}, {1,{8,4}},
+            {1,{4,5}}, {1,{5,5}}, {1,{6,5}}, {1,{7,5}}, {1,{8,5}},
+            {1,{4,6}}, {1,{5,6}}, {1,{6,6}}, {1,{7,6}}, {1,{8,6}}]
     end
 
     test "should map given entries in map structure with overlap" do
-        data = [{4,3}, {5,3}, {6,3}, {7,3}, {8,3},
-                                    {4,4}, {5,4}, {6,4}, {7,4}, {8,4},
-                                    {4,5}, {5,5}, {6,5}, {7,5}, {8,5},
-                                    {4,6}, {5,6}, {6,6}, {7,6}, {8,6}, {5,5}, {6,5}]
-        assert make_claim_map(data) == %{4 => %{3 => "#", 4 => "#", 5 => "#", 6 => "#"}, 
-                                         5 => %{3 => "#", 4 => "#", 5 => "X", 6 => "#"},
-                                         6 => %{3 => "#", 4 => "#", 5 => "X", 6 => "#"},
-                                         7 => %{3 => "#", 4 => "#", 5 => "#", 6 => "#"},
-                                         8 => %{3 => "#", 4 => "#", 5 => "#", 6 => "#"}}
+        data =[{1,{4,3}}, {1,{5,3}}, {1,{6,3}}, {1,{7,3}}, {1,{8,3}},
+            {1,{4,4}}, {1,{5,4}}, {1,{6,4}}, {1,{7,4}}, {1,{8,4}},
+            {1,{4,5}}, {1,{5,5}}, {1,{6,5}}, {1,{7,5}}, {1,{8,5}},
+            {1,{4,6}}, {1,{5,6}}, {1,{6,6}}, {1,{7,6}}, {1,{8,6}}, 
+            {2,{5,5}}, {2,{6,5}}]
+        assert make_claim_map(data) == %{4 => %{3 => 1, 4 => 1, 5 => 1, 6 => 1}, 
+                                         5 => %{3 => 1, 4 => 1, 5 => "X", 6 => 1},
+                                         6 => %{3 => 1, 4 => 1, 5 => "X", 6 => 1},
+                                         7 => %{3 => 1, 4 => 1, 5 => 1, 6 => 1},
+                                         8 => %{3 => 1, 4 => 1, 5 => 1, 6 => 1}}
     end
 
     test "should count X in the map structure" do
@@ -92,15 +93,16 @@ defmodule DayTwoTest do
     end
     
     test "should map given entries in map structure" do
-        data = [{4,3}, {5,3}, {6,3}, {7,3}, {8,3},
-                                    {4,4}, {5,4}, {6,4}, {7,4}, {8,4},
-                                    {4,5}, {5,5}, {6,5}, {7,5}, {8,5},
-                                    {4,6}, {5,6}, {6,6}, {7,6}, {8,6}]
-        assert make_claim_map(data) == %{4 => %{3 => "#", 4 => "#", 5 => "#", 6 => "#"}, 
-                                         5 => %{3 => "#", 4 => "#", 5 => "#", 6 => "#"},
-                                         6 => %{3 => "#", 4 => "#", 5 => "#", 6 => "#"},
-                                         7 => %{3 => "#", 4 => "#", 5 => "#", 6 => "#"},
-                                         8 => %{3 => "#", 4 => "#", 5 => "#", 6 => "#"}}
+       data =[{1,{4,3}}, {1,{5,3}}, {1,{6,3}}, {1,{7,3}}, {1,{8,3}},
+            {1,{4,4}}, {1,{5,4}}, {1,{6,4}}, {1,{7,4}}, {1,{8,4}},
+            {1,{4,5}}, {1,{5,5}}, {1,{6,5}}, {1,{7,5}}, {1,{8,5}},
+            {1,{4,6}}, {1,{5,6}}, {1,{6,6}}, {1,{7,6}}, {1,{8,6}}] 
+ 
+        assert make_claim_map(data) == %{4 => %{3 => 1, 4 => 1, 5 => 1, 6 => 1}, 
+                                         5 => %{3 => 1, 4 => 1, 5 => 1, 6 => 1},
+                                         6 => %{3 => 1, 4 => 1, 5 => 1, 6 => 1},
+                                         7 => %{3 => 1, 4 => 1, 5 => 1, 6 => 1},
+                                         8 => %{3 => 1, 4 => 1, 5 => 1, 6 => 1}}
     end
 
     test "should detect multiple claims" do
@@ -126,5 +128,5 @@ defmodule DayTwoTest do
 end
 
 initial = DayThree.load_data("day_3_input.txt")
-IO.puts "Answer ONE: #{initial |> DayThree.multiple_claims()}"
+#IO.puts "Answer ONE: #{initial |> DayThree.multiple_claims()}"
 
