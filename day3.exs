@@ -6,31 +6,7 @@ defmodule DayThree do
         |> String.split("\n")
     end
 
-    def data_to_claim_map(data) do
-        data
-        |> Enum.map(fn claim -> parse_claim(claim) end)
-        |> Enum.map(fn claim_tup -> create_map_entries(claim_tup) end)
-        |> Enum.flat_map(&(&1))
-        |> make_claim_map
-    end 
-
-    def multiple_claims(data) do
-        data_to_claim_map(data) |> count_overlaps
-    end
-
-    def find_complete_claim(data) do
-        data_to_claim_map(data)
-        |> count_all_ids
-    end
-
-    def count_all_ids(map) do
-        Map.values(map) 
-        |> Enum.flat_map(fn mp -> Map.values(mp) end)
-        |> Enum.reduce(%{}, fn val, acc -> #count each id and put it in a map id => nr_occurs
-            # and start with a test
-    end
-
-    def parse_claim(str) do
+     def parse_claim(str) do
         values = str
         |> String.split(["#", "@", ":"])
         |> Enum.map(&String.trim&1)
@@ -59,16 +35,50 @@ defmodule DayThree do
         end)
     end
 
+    def data_to_claim_map(data) do
+        data
+        |> Enum.map(fn claim -> parse_claim(claim) end)
+        |> Enum.map(fn claim_tup -> create_map_entries(claim_tup) end)
+        |> Enum.flat_map(&(&1))
+        |> make_claim_map
+    end 
+
     def count_overlaps(map) do
         Map.values(map) 
         |> Enum.flat_map(fn mp -> Map.values(mp) end)
         |> Enum.reduce(0, fn sym, acc -> if sym == "X", do: acc + 1, else: acc end)
     end
 
-    def calculate_areas(claims) do
-            claims
-            |> Enum.reduce(%{}, fn {id, {_x, _y}, {w, h}}, acc -> Map.put(acc, id, w * h) end)
+    def multiple_claims(data) do
+        data_to_claim_map(data) |> count_overlaps
     end
+
+    def count_all_ids(map) do
+        Map.values(map) 
+        |> Enum.flat_map(fn mp -> Map.values(mp) end)
+        |> Enum.reduce(%{}, fn val, acc -> cond do
+            get_in(acc, [val]) == nil ->
+                put_in(acc, [val], 1)
+            get_in(acc, [val]) >= 1 ->
+                update_in(acc, [val], &(&1 + 1))
+        end
+        end)
+    end
+
+    def calculate_areas(claims) do
+        claims
+        |> Enum.reduce(%{}, fn {id, {_x, _y}, {w, h}}, acc -> Map.put(acc, id, w * h) end)
+    end
+
+   def find_complete_claim(data) do
+       actual_areas = data_to_claim_map(data) |> count_all_ids
+       expected_areas = data 
+       |> Enum.map(fn claim -> parse_claim(claim) end)
+       |> calculate_areas()
+
+       {id, _value} = actual_areas |> Enum.find(fn {k,v} -> get_in(expected_areas, [k]) == v end)
+       id
+   end
 
 end
 
@@ -118,6 +128,15 @@ defmodule DayTwoTest do
         assert count_overlaps(data) == 2
     end
     
+     test "should count all Id's in the map structure" do
+        data =  %{4 => %{3 => 1, 4 => 1, 5 => 1, 6 => 2}, 
+                                         5 => %{3 => 1, 4 => 1, 5 => "X", 6 => 2},
+                                         6 => %{3 => 1, 4 => 1, 5 => "X", 6 => 2},
+                                         7 => %{3 => 4, 4 => 4, 5 => 3, 6 => 3},
+                                         8 => %{3 => 4, 4 => 4, 5 => 3, 6 => 3}}
+        assert count_all_ids(data) == %{1 => 7, 2 => 3, 3 => 4, 4 => 4, "X" => 2}
+    end
+ 
     test "should map given entries in map structure" do
        data =[{1,{4,3}}, {1,{5,3}}, {1,{6,3}}, {1,{7,3}}, {1,{8,3}},
             {1,{4,4}}, {1,{5,4}}, {1,{6,4}}, {1,{7,4}}, {1,{8,4}},
@@ -154,5 +173,5 @@ defmodule DayTwoTest do
 end
 
 initial = DayThree.load_data("day_3_input.txt")
-#IO.puts "Answer ONE: #{initial |> DayThree.multiple_claims()}"
-
+IO.puts "Answer ONE: #{initial |> DayThree.multiple_claims()}"
+IO.puts "Answer TWO: #{initial |> DayThree.find_complete_claim()}"
