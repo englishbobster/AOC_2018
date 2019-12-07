@@ -26,7 +26,7 @@ defmodule DayFour do
     end
 
     def parse_id_and_action(idaction) do
-        idaction
+        regex = ~r/Guard #(?<id>[0-9]+) begins shift/
     end
 
     def parse_record(record) do
