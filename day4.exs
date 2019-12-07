@@ -27,13 +27,16 @@ defmodule DayFour do
 
     def parse_id_and_action(idaction) do
         regex = ~r/Guard #(?<id>[0-9]+) begins shift/
+            %{"id" => id} = Regex.named_captures(regex, idaction)
+        {String.to_integer(id), :begins}
     end
 
     def parse_record(record) do
         regex = ~r/\[(?<time>.+)\](?<action>.+)/
         %{"time" => time, "action" => action} = Regex.named_captures(regex, record)
         [d, t] = parse_time_and_date(time)
-        {d, t, action}
+        {id, ac} = parse_id_and_action(action)
+        {d, t, id, ac}
     end
 
 
