@@ -32,18 +32,23 @@ defmodule DayFour do
                     %{"id" => id} = Regex.named_captures(regex, idaction)
                     {String.to_integer(id), :begins}
                 String.contains?(idaction, "asleep") ->
-                    {0, :sleep}
+                    {nil, :sleep}
                 String.contains?(idaction, "wakes") ->
-                    {0, :wakes}
+                    {nil, :wakes}
             end
     end
 
-    def parse_record(record) do
+    def parse_record(record, prev_id) do
         regex = ~r/\[(?<time>.+)\](?<action>.+)/
         %{"time" => time, "action" => action} = Regex.named_captures(regex, record)
         [d, t] = parse_time_and_date(time)
         {id, ac} = parse_id_and_action(action)
+        if id == nil, do: id = prev_id
         {d, t, id, ac}
+    end
+
+    def parse_records(records) do
+        records
     end
 
 
@@ -91,18 +96,25 @@ defmodule DayFourTest do
 
     test "should parse shift begin", context do
         shift_start = context[:data] |> List.first
-        assert parse_record(shift_start) == {{1518,11,01}, {00,00}, 10, :begins}
+        assert parse_record(shift_start, 10) == {{1518,11,01}, {00,00}, 10, :begins}
     end
 
     test "should parse fall asleep", context do
         fall_asleep = context[:data] |> Enum.at(1)
-        assert {{1518,11,01},{0,5}, _, :sleep} = parse_record(fall_asleep)
+        assert {{1518,11,01},{0,5}, _, :sleep} = parse_record(fall_asleep, nil)
     end
     
     test "should parse wakes up", context do
         fall_asleep = context[:data] |> Enum.at(2)
-        assert {{1518,11,01},{0,25}, _, :wakes} = parse_record(fall_asleep)
+        assert {{1518,11,01},{0,25}, _, :wakes} = parse_record(fall_asleep, nil)
     end
+
+    test "should parse begin asleep wakesup", context do
+        triplet = context[:data] |> Enum.slice(0, 3)
+        assert parse_records(triplet) == [{{1518,11,01}, {00,00}, 10, :begins},
+            {{1518,11,01}, {00,5}, 10, :sleep}, {{1518,11,01},{0,25}, 10, :wakes}] 
+    end
+
 
 end
 
