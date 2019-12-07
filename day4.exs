@@ -27,8 +27,15 @@ defmodule DayFour do
 
     def parse_id_and_action(idaction) do
         regex = ~r/Guard #(?<id>[0-9]+) begins shift/
-            %{"id" => id} = Regex.named_captures(regex, idaction)
-        {String.to_integer(id), :begins}
+            cond do
+                String.contains?(idaction, "#") ->
+                    %{"id" => id} = Regex.named_captures(regex, idaction)
+                    {String.to_integer(id), :begins}
+                String.contains?(idaction, "asleep") ->
+                    {0, :sleep}
+                String.contains?(idaction, "wakes") ->
+                    {0, :wakes}
+            end
     end
 
     def parse_record(record) do
@@ -86,6 +93,17 @@ defmodule DayFourTest do
         shift_start = context[:data] |> List.first
         assert parse_record(shift_start) == {{1518,11,01}, {00,00}, 10, :begins}
     end
+
+    test "should parse fall asleep", context do
+        fall_asleep = context[:data] |> Enum.at(1)
+        assert {{1518,11,01},{0,5}, _, :sleep} = parse_record(fall_asleep)
+    end
+    
+    test "should parse wakes up", context do
+        fall_asleep = context[:data] |> Enum.at(2)
+        assert {{1518,11,01},{0,25}, _, :wakes} = parse_record(fall_asleep)
+    end
+
 end
 
 
