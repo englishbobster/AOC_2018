@@ -60,6 +60,23 @@ defmodule DayFour do
                 parse_records(tail, id, current_result ++ [{d, t, id, ac}])
         end
     end
+
+
+    def minutes_asleep(records) do
+        minutes_asleep(records, 0, %{})
+    end
+    def minutes_asleep([], _, result_map) do
+        result_map
+    end
+    def minutes_asleep([h|t], current_minute, result_map) do
+        {date, {_hr, min}, id, action} = h
+        case action do
+            :begins -> minutes_asleep(t, 0, put_in(result_map, [{date, id}], 0))
+            :sleep -> minutes_asleep(t, min, result_map)
+            :wakes -> minutes_asleep(t, 0, update_in(result_map, [{date, id}], &(&1 + (min - current_minute))))
+        end
+    end
+
 end
 
 ExUnit.start()
@@ -87,6 +104,15 @@ defmodule DayFourTest do
                 "[1518-11-05 00:45] falls asleep",
                 "[1518-11-05 00:55] wakes up" ]
         {:ok, data: data}
+    end
+
+    test "should produce sleep cycle for first guard" do
+        testdata = [{{1518, 11, 1},{0, 0}, 10, :begins},
+            {{1518, 11, 1},{0, 5}, 10, :sleep}, 
+            {{1518, 11, 1},{0, 25}, 10, :wakes},
+            {{1518, 11, 1},{0, 30}, 10, :sleep}, 
+            {{1518, 11, 1},{0, 55}, 10, :wakes}]
+        assert minutes_asleep(testdata) == %{{{1518, 11 , 1}, 10} => 45}
     end
 
     test "should sort list in time order", context do
