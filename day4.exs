@@ -68,14 +68,27 @@ defmodule DayFour do
     def minutes_asleep([], _, result_map) do
         result_map
     end
-    def minutes_asleep([h|t], current_minute, result_map) do
-        {date, {_hr, min}, id, action} = h
-        case action do
-            :begins -> minutes_asleep(t, 0, put_in(result_map, [{date, id}], 0))
-            :sleep -> minutes_asleep(t, min, result_map)
-            :wakes -> minutes_asleep(t, 0, update_in(result_map, [{date, id}], &(&1 + (min - current_minute))))
+    def minutes_asleep([{_date, {_hr, _min}, id, :begins}|t], _current_minute, result_map) do
+        if get_in(result_map, [id]) == nil do
+            minutes_asleep(t, 0, put_in(result_map, [id], 0))
+        else
+            minutes_asleep(t, 0, result_map)
         end
     end
+    def minutes_asleep([{_date, {_hr, min}, _id, :sleep}|t], _current_minute, result_map) do
+        minutes_asleep(t, min, result_map) 
+    end
+    def minutes_asleep([{_date, {_hr, min}, id, :wakes}|t], current_minute, result_map) do
+        timediff = min - current_minute
+        minutes_asleep(t, 0, update_in(result_map, [id], fn val -> val + timediff end))
+    end
+
+    def find_sleepiest(records) do
+        records
+        |> sort_records() 
+        |> parse_records()
+        |> minutes_asleep()
+    end     
 
 end
 
@@ -112,7 +125,11 @@ defmodule DayFourTest do
             {{1518, 11, 1},{0, 25}, 10, :wakes},
             {{1518, 11, 1},{0, 30}, 10, :sleep}, 
             {{1518, 11, 1},{0, 55}, 10, :wakes}]
-        assert minutes_asleep(testdata) == %{{{1518, 11 , 1}, 10} => 45}
+        assert minutes_asleep(testdata) == %{10 => 45}
+    end
+
+    test "should find sleepiest", context do
+        assert find_sleepiest(context[:data]) == 45
     end
 
     test "should sort list in time order", context do
@@ -156,4 +173,5 @@ defmodule DayFourTest do
 
 end
 
-
+initial = DayFour.load_data("day_4_input.txt")
+IO.puts "Answer ONE: #{initial |> DayFour.find_sleepiest}"
