@@ -38,22 +38,29 @@ defmodule DayFour do
             end
     end
 
-    def parse_record(record, prev_id) do
+    def parse_record(record) do
         regex = ~r/\[(?<time>.+)\](?<action>.+)/
         %{"time" => time, "action" => action} = Regex.named_captures(regex, record)
         [d, t] = parse_time_and_date(time)
         {id, ac} = parse_id_and_action(action)
-        if id == nil, do: id = prev_id
         {d, t, id, ac}
     end
-
+    
     def parse_records(records) do
-        records
+        parse_records(records, nil, [])
     end
-
-
+    def parse_records([], _, current_result) do
+        current_result
+    end
+    def parse_records([head|tail], currentid, current_result) do
+        case parse_record(head) do
+            {d, t, nil, ac} ->
+                parse_records(tail, currentid, current_result ++ [{d, t, currentid, ac}])
+            {d, t, id, ac} ->
+                parse_records(tail, id, current_result ++ [{d, t, id, ac}])
+        end
+    end
 end
-
 
 ExUnit.start()
 
@@ -96,23 +103,28 @@ defmodule DayFourTest do
 
     test "should parse shift begin", context do
         shift_start = context[:data] |> List.first
-        assert parse_record(shift_start, 10) == {{1518,11,01}, {00,00}, 10, :begins}
+        assert parse_record(shift_start) == {{1518,11,01}, {00,00}, 10, :begins}
     end
 
     test "should parse fall asleep", context do
         fall_asleep = context[:data] |> Enum.at(1)
-        assert {{1518,11,01},{0,5}, _, :sleep} = parse_record(fall_asleep, nil)
+        assert {{1518,11,01},{0,5}, _, :sleep} = parse_record(fall_asleep)
     end
     
     test "should parse wakes up", context do
         fall_asleep = context[:data] |> Enum.at(2)
-        assert {{1518,11,01},{0,25}, _, :wakes} = parse_record(fall_asleep, nil)
+        assert {{1518,11,01},{0,25}, _, :wakes} = parse_record(fall_asleep)
     end
 
     test "should parse begin asleep wakesup", context do
         triplet = context[:data] |> Enum.slice(0, 3)
         assert parse_records(triplet) == [{{1518,11,01}, {00,00}, 10, :begins},
             {{1518,11,01}, {00,5}, 10, :sleep}, {{1518,11,01},{0,25}, 10, :wakes}] 
+    end
+
+    test "should parse all", context do
+        thedata = context[:data] 
+        assert parse_records(thedata) |> List.last == {{1518,11,05},{0,55}, 99, :wakes} 
     end
 
 
