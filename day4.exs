@@ -88,7 +88,25 @@ defmodule DayFour do
         |> sort_records() 
         |> parse_records()
         |> minutes_asleep()
+        |> Enum.reduce({0, 0}, fn {k, v}, {id, min} ->
+            if (v > min) do
+                {k,v}
+            else
+                {id, min} 
+            end
+        end)
     end     
+
+    def get_records_with_id(records, id) do
+        records |> sort_records() |> parse_records()
+        |> Enum.filter(fn {_d, _t, i, _ac} -> i == id end) 
+    end
+
+    def find_sleepiest_minute(records) do
+        {id, _min} = find_sleepiest(records)
+        id_recs = get_records_with_id(records, id)
+        IO.inspect(id_recs)
+    end
 
 end
 
@@ -129,7 +147,7 @@ defmodule DayFourTest do
     end
 
     test "should find sleepiest", context do
-        assert find_sleepiest(context[:data]) == 45
+        assert find_sleepiest(context[:data]) == {10, 50}
     end
 
     test "should sort list in time order", context do
@@ -174,4 +192,4 @@ defmodule DayFourTest do
 end
 
 initial = DayFour.load_data("day_4_input.txt")
-IO.puts "Answer ONE: #{initial |> DayFour.find_sleepiest}"
+IO.puts "Answer ONE: #{initial |> DayFour.find_sleepiest_minute}"
