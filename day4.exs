@@ -102,10 +102,13 @@ defmodule DayFour do
         |> Enum.filter(fn {_d, _t, i, _ac} -> i == id end) 
     end
 
+    def create_range(records) do
+        {{},1..2}
+    end
+
     def find_sleepiest_minute(records) do
         {id, _min} = find_sleepiest(records)
         id_recs = get_records_with_id(records, id)
-        IO.inspect(id_recs)
     end
 
 end
@@ -135,6 +138,13 @@ defmodule DayFourTest do
                 "[1518-11-05 00:45] falls asleep",
                 "[1518-11-05 00:55] wakes up" ]
         {:ok, data: data}
+    end
+
+    test "should create minute range" do
+        data = [{{1518, 3, 10}, {23, 57}, 73, :begins}, 
+            {{1518, 3, 11}, {0, 6}, 73, :sleep},
+            {{1518, 3, 11}, {0, 22}, 73, :wakes}]
+        assert create_range(data) == {{1518, 3, 11}, 6..21}
     end
 
     test "should produce sleep cycle for first guard" do
@@ -192,4 +202,4 @@ defmodule DayFourTest do
 end
 
 initial = DayFour.load_data("day_4_input.txt")
-IO.puts "Answer ONE: #{initial |> DayFour.find_sleepiest_minute}"
+#IO.puts "Answer ONE: #{initial |> DayFour.find_sleepiest_minute}"
