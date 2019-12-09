@@ -102,8 +102,22 @@ defmodule DayFour do
         |> Enum.filter(fn {_d, _t, i, _ac} -> i == id end) 
     end
 
-    def create_range(records) do
-        {{},1..2}
+    def create_ranges(records) do
+        create_ranges(records, 0, 0, %{}) 
+    end
+    def create_ranges([]. _, _, result_map) do
+        result_map
+    end
+    def create_ranges([{date, {_hr, min}, _id, :begins}|t], _start, _stop, result_map) do
+        if get_in(result_map, [date]) == nil do
+            create_ranges(t, 0, 0, put_in(result_map, [date], 0))
+        else #not gonna work since we will prolly have more than one range on a given day
+            create_ranges(t, 0, result_map)
+        end
+    end
+    def create_ranges([{date, {_hr, min}, _id, :sleep}|t], _start, _stop, result_map) do
+    end
+    def create_ranges([{date, {_hr, min}, _id, :wakes}|t], _start, _stop, result_map) do
     end
 
     def find_sleepiest_minute(records) do
@@ -144,7 +158,7 @@ defmodule DayFourTest do
         data = [{{1518, 3, 10}, {23, 57}, 73, :begins}, 
             {{1518, 3, 11}, {0, 6}, 73, :sleep},
             {{1518, 3, 11}, {0, 22}, 73, :wakes}]
-        assert create_range(data) == {{1518, 3, 11}, 6..21}
+        assert create_ranges(data) == {{1518, 3, 11}, 6..21}
     end
 
     test "should produce sleep cycle for first guard" do
