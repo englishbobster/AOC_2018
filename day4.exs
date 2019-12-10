@@ -61,7 +61,6 @@ defmodule DayFour do
         end
     end
 
-
     def minutes_asleep(records) do
         minutes_asleep(records, 0, %{})
     end
@@ -103,21 +102,30 @@ defmodule DayFour do
     end
 
     def create_ranges(records) do
-        create_ranges(records, 0, 0, %{}) 
+        create_ranges(records, 0, %{}) 
     end
-    def create_ranges([]. _, _, result_map) do
+    def create_ranges([], _,  result_map) do
         result_map
     end
-    def create_ranges([{date, {_hr, min}, _id, :begins}|t], _start, _stop, result_map) do
-        if get_in(result_map, [date]) == nil do
-            create_ranges(t, 0, 0, put_in(result_map, [date], 0))
-        else #not gonna work since we will prolly have more than one range on a given day
+    def create_ranges([{date, {hr, _min}, _id, :begins}|t], _start, result_map) do
+        nd = if (hr == 23) do
+            d = elem(date, 2)
+            put_elem(date,2, d + 1)
+        else
+            date
+        end
+        if get_in(result_map, [nd]) == nil do
+            create_ranges(t, 0, put_in(result_map, [nd], {}))
+        else
             create_ranges(t, 0, result_map)
         end
     end
-    def create_ranges([{date, {_hr, min}, _id, :sleep}|t], _start, _stop, result_map) do
+    def create_ranges([{_date, {_hr, min}, _id, :sleep}|t], _start, result_map) do
+        create_ranges(t, min, result_map)
     end
-    def create_ranges([{date, {_hr, min}, _id, :wakes}|t], _start, _stop, result_map) do
+    def create_ranges([{date, {_hr, min}, _id, :wakes}|t], start, result_map) do
+        rg = Range.new(start, (min - 1))
+        create_ranges(t, 0, update_in(result_map, [date], fn val -> Tuple.append(val, rg) end))
     end
 
     def find_sleepiest_minute(records) do
@@ -158,7 +166,7 @@ defmodule DayFourTest do
         data = [{{1518, 3, 10}, {23, 57}, 73, :begins}, 
             {{1518, 3, 11}, {0, 6}, 73, :sleep},
             {{1518, 3, 11}, {0, 22}, 73, :wakes}]
-        assert create_ranges(data) == {{1518, 3, 11}, 6..21}
+        assert create_ranges(data) == %{{1518, 3, 11} => {6..21}}
     end
 
     test "should produce sleep cycle for first guard" do
