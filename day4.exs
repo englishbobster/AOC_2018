@@ -131,6 +131,20 @@ defmodule DayFour do
     def find_sleepiest_minute(records) do
         {id, _min} = find_sleepiest(records)
         id_recs = get_records_with_id(records, id)
+        {minute, _sleep_min} = create_ranges(id_recs)
+        |> Map.values
+        |> Enum.map(fn t -> Tuple.to_list(t) end)
+        |> Enum.flat_map(&(&1))
+        |> Enum.flat_map(&(&1))
+        |> Enum.reduce(%{}, fn x, acc -> Map.update(acc, x, 1, &(&1 + 1)) end) 
+        |> Enum.reduce({0,0}, fn {k,v}, {key, val} -> 
+            if (v > val) do
+                {k, v}
+            else
+                {key, val}
+            end
+        end)
+        minute * id
     end
 
 end
@@ -224,4 +238,4 @@ defmodule DayFourTest do
 end
 
 initial = DayFour.load_data("day_4_input.txt")
-#IO.puts "Answer ONE: #{initial |> DayFour.find_sleepiest_minute}"
+IO.puts "Answer ONE: #{initial |> DayFour.find_sleepiest_minute}"
