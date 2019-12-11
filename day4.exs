@@ -9,7 +9,7 @@ defmodule DayFour do
 
     def sort_records(records) do
         records
-        |> Enum.sort
+        |> Enum.sort #|> IO.inspect([limit: :infinity, width: 35])
     end
 
     def parse_time_and_date(datestr) do
@@ -108,12 +108,7 @@ defmodule DayFour do
         result_map
     end
     def create_ranges([{date, {hr, _min}, _id, :begins}|t], _start, result_map) do
-        nd = if (hr == 23) do
-            d = elem(date, 2)
-            put_elem(date,2, d + 1)
-        else
-            date
-        end
+        nd = bump_date(date, hr)
         if get_in(result_map, [nd]) == nil do
             create_ranges(t, 0, put_in(result_map, [nd], {}))
         else
@@ -128,10 +123,27 @@ defmodule DayFour do
         create_ranges(t, 0, update_in(result_map, [date], fn val -> Tuple.append(val, rg) end))
     end
 
+    def bump_date({yr,mnth,day}, hr) do
+        {:ok, current} = Date.new(yr, mnth, day)
+        if (hr == 23) do
+            newdate = Date.add(current, 1)
+            {newdate.year, newdate.month, newdate.day}
+        else
+            {yr, mnth, day}
+        end
+    end
+
+
+
     def find_sleepiest_minute(records) do
         {id, _min} = find_sleepiest(records)
         id_recs = get_records_with_id(records, id)
-        {minute, _sleep_min} = create_ranges(id_recs)
+        {minute, _sleep_min} = sleepy_minute(id_recs)
+        minute * id
+    end
+
+    def sleepy_minute(id_recs) do
+        create_ranges(id_recs)
         |> Map.values
         |> Enum.map(fn t -> Tuple.to_list(t) end)
         |> Enum.flat_map(&(&1))
@@ -144,7 +156,26 @@ defmodule DayFour do
                 {key, val}
             end
         end)
-        minute * id
+    end
+
+
+    def same_minute_for_guards(records) do
+        sleep_map = records
+        |> sort_records() 
+        |> parse_records()
+        |> minutes_asleep()  # a map of ids and minutes asleep
+        
+        {guard, minute, tot} = Map.keys(sleep_map)
+        |> Enum.map(fn id -> {id, get_records_with_id(records, id)} end)
+        |> Enum.map(fn {id, record_list} -> {id, sleepy_minute(record_list)} end) 
+        |> Enum.reduce({0, 0, 0}, fn {id, {min, totalmins}}, {i,m,t} -> 
+            if (totalmins > t) do
+                {id, min, totalmins}
+            else
+                {i,m,t}
+            end
+        end)
+        guard * minute
     end
 
 end
@@ -174,6 +205,14 @@ defmodule DayFourTest do
                 "[1518-11-05 00:45] falls asleep",
                 "[1518-11-05 00:55] wakes up" ]
         {:ok, data: data}
+    end
+    
+    test "should bump date" do
+        assert bump_date({1997, 01, 31}, 23) == {1997, 02, 01}
+    end
+
+    test "should not bump date" do
+        assert bump_date({1997, 01, 31}, 20) == {1997, 01, 31}
     end
 
     test "should create minute range" do
@@ -239,3 +278,4 @@ end
 
 initial = DayFour.load_data("day_4_input.txt")
 IO.puts "Answer ONE: #{initial |> DayFour.find_sleepiest_minute}"
+IO.puts "Answer TWO: #{initial |> DayFour.same_minute_for_guards}"
