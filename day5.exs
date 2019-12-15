@@ -1,18 +1,17 @@
 defmodule DayFive do
-
+    
     def react(str) do
-        {_na, res} = str
-        |> String.to_charlist 
-        |> Enum.reduce({' ',''}, fn ch, {current, result} ->
-            if (abs(ch - List.first(current))) != 32 do
-                {' ', result}
+        {_, reduced} = str |> String.to_charlist
+        |> Enum.reduce({0,''}, fn ch, {prev_ch,result} ->
+            if length(result) == 0 or abs(prev_ch - ch) != 32 do
+                {ch, result ++ [ch]}
             else
-                {[ch], result ++ [ch]}
+                {_, rest} = List.pop_at(result, -1)
+                {0, rest}
             end
         end)
-        String.Chars.to_string(res)
-    end
-
+        String.Chars.to_string(reduced)
+   end 
 end
 
 ExUnit.start()
@@ -28,15 +27,15 @@ defmodule DayFiveTest do
     test "react double unit" do
         assert react("aAbB") == ""
     end
-    
+
     test "react double unit again" do
         assert react("BaAb") == ""
     end
-
+ 
     test "react not at all" do
         assert react("abAB") == "abAB"
     end
-
+ 
     test "react larger" do
         assert react("dabAcCaCBAcCcaDA") == "dabCBAcaDA"
     end
