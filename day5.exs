@@ -1,8 +1,16 @@
 defmodule DayFive do
-    
+    def load_data(file) do
+        File.read!(file)
+        |> String.trim
+    end
+
     def react(str) do
-        {_, reduced} = str |> String.to_charlist
-        |> Enum.reduce({0,''}, fn ch, {prev_ch,result} ->
+        as_list = String.to_charlist(str)
+        react(as_list, 0)
+    end
+    def react(cl, prev_len) when length(cl) == prev_len, do: String.Chars.to_string(cl)
+    def react(cl, _prev_len) do
+        {_, cl_reduced} = Enum.reduce(cl, {0,''}, fn ch, {prev_ch,result} ->
             if length(result) == 0 or abs(prev_ch - ch) != 32 do
                 {ch, result ++ [ch]}
             else
@@ -10,7 +18,9 @@ defmodule DayFive do
                 {0, rest}
             end
         end)
-        String.Chars.to_string(reduced)
+        old = length(cl)
+        IO.puts "cl: #{old}"
+        react(cl_reduced, old)
    end 
 end
 
@@ -42,3 +52,9 @@ defmodule DayFiveTest do
 
 
 end
+
+initial = DayFive.load_data("day_5_input.txt")
+result_str = initial |> DayFive.react
+IO.puts "Answer ONE: #{length(String.to_charlist(intitial))}"
+IO.puts "Answer TWO: #{}"
+
