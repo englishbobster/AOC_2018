@@ -19,7 +19,6 @@ defmodule DayFive do
             end
         end)
         old = length(cl)
-        IO.puts "cl: #{old}"
         react(cl_reduced, old)
    end 
 end
