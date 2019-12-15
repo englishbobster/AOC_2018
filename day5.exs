@@ -8,7 +8,9 @@ defmodule DayFive do
         as_list = String.to_charlist(str)
         react(as_list, 0)
     end
-    def react(cl, prev_len) when length(cl) == prev_len, do: String.Chars.to_string(cl)
+    def react(cl, prev_len) when length(cl) == prev_len do 
+       length(cl) 
+    end
     def react(cl, _prev_len) do
         {_, cl_reduced} = Enum.reduce(cl, {0,''}, fn ch, {prev_ch,result} ->
             if length(result) == 0 or abs(prev_ch - ch) != 32 do
@@ -30,30 +32,28 @@ defmodule DayFiveTest do
     use ExUnit.Case
 
     test "react single unit" do
-        assert react("aA") == ""
+        assert react("aA") == 0
     end
 
     test "react double unit" do
-        assert react("aAbB") == ""
+        assert react("aAbB") == 0
     end
 
     test "react double unit again" do
-        assert react("BaAb") == ""
+        assert react("BaAb") == 0
     end
  
     test "react not at all" do
-        assert react("abAB") == "abAB"
+        assert react("abAB") == 4
     end
  
     test "react larger" do
-        assert react("dabAcCaCBAcCcaDA") == "dabCBAcaDA"
+        assert react("dabAcCaCBAcCcaDA") == 10
     end
-
-
 end
 
 initial = DayFive.load_data("day_5_input.txt")
 result_str = initial |> DayFive.react
-IO.puts "Answer ONE: #{length(String.to_charlist(intitial))}"
+IO.puts "Answer ONE: #{result_str}"
 IO.puts "Answer TWO: #{}"
 
