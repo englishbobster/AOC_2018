@@ -13,16 +13,42 @@ defmodule DayFive do
     end
     def react(cl, _prev_len) do
         {_, cl_reduced} = Enum.reduce(cl, {0,''}, fn ch, {prev_ch,result} ->
-            if length(result) == 0 or abs(prev_ch - ch) != 32 do
-                {ch, result ++ [ch]}
+            if length(result) == 0 or abs(prev_ch - ch) != 32 do {ch, result ++ [ch]}
             else
                 {_, rest} = List.pop_at(result, -1)
                 {0, rest}
             end
         end)
         old = length(cl)
+        IO.write(".")
         react(cl_reduced, old)
-   end 
+    end 
+
+    def remove_unit_and_react(char, str) do
+        IO.puts("removing char: #{String.Chars.to_string(char)}")
+        stripped = str
+        |> String. to_charlist
+        |> Enum.filter(fn ch -> ch != char and ch != char + 32 end)
+        |> String.Chars.to_string
+        IO.puts(String.length(stripped))
+        len = react(stripped)
+        IO.puts("got length #{len}")
+        len
+    end
+
+    def improve_polymer(str) do
+        {_, l} = 65..90 
+        |> Enum.reduce(%{}, fn c, acc -> Map.put(acc, c, remove_unit_and_react(c, str)) end)
+        |> Enum.reduce({0,length(str)}, fn {k,v}, {char, len} ->
+            if (v < len) do
+                {k,v}
+            else
+                {char, len}
+            end
+        end)
+       l 
+    end
+                                                    
 end
 
 ExUnit.start()
@@ -53,7 +79,9 @@ defmodule DayFiveTest do
 end
 
 initial = DayFive.load_data("day_5_input.txt")
-result_str = initial |> DayFive.react
-IO.puts "Answer ONE: #{result_str}"
-IO.puts "Answer TWO: #{}"
+#result_str = initial |> DayFive.react
+#IO.puts "Answer ONE: #{result_str}"
+IO.puts "Answer TWO: #{initial |> DayFive.improve_polymer()}"
+
+
 
