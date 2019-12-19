@@ -36,7 +36,8 @@ defmodule DaySix do
     end
 
     def update_at(grid, {x,y}, val) do
-        grid
+        row = Enum.at(grid, y) |> List.update_at(x, fn _v -> val end)
+        List.update_at(grid, y, fn _r -> row end)
     end
 end
 
@@ -75,9 +76,9 @@ defmodule DaySixTest do
     end
 
     test "should update a grid", context do
-        assert update_at(context[:empty_grid], {2, 2}, 65) == [[46,46,46,46,46],
+        assert update_at(context[:empty_grid], {0, 1}, 65) == [[46,46,46,46,46],
+                                                                 [65,46,46,46,46],
                                                                  [46,46,46,46,46],
-                                                                 [46,46,65,46,46],
                                                                  [46,46,46,46,46],
                                                                  [46,46,46,46,46]]
     end
