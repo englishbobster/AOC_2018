@@ -29,15 +29,33 @@ defmodule DaySix do
             {cur_x, cur_y}
         end)
     end
-
+    
     def make_grid({x1,y1},{x2,y2}) do
-        row = y1..y2 |> Enum.map(fn _val -> 46 end)
-        x1..x2 |> Enum.map(fn _val -> row end)
+        row = x1..x2 |> Enum.map(fn _val -> 46 end)
+        y1..y2 |> Enum.map(fn _val -> row end)
     end
 
     def update_at(grid, {x,y}, val) do
         row = Enum.at(grid, y) |> List.update_at(x, fn _v -> val end)
         List.update_at(grid, y, fn _r -> row end)
+    end
+
+    def manhatten_distance({x1,y1}, {x2,y2}) do
+        abs(x1 - x2) + abs(y1 - y2)
+    end
+    
+    def generate_symbols(values) do #{coord, atom}
+        atoms = for x <- 65..90, y <- 65..90, do: String.to_atom(String.Chars.to_string([x,y]))
+        some_atoms = Enum.take(atoms, length(values))
+        Enum.zip(values, some_atoms)
+    end
+
+    def build_area_map(values) do
+        {xs, ys} = find_smallest_x_y(values)
+        largest = find_largest_x_y(values)
+        grid = make_grid({xs,ys}, largest)
+        generate_symbols(values) 
+        |> Enum.reduce(grid, fn {{x,y}, symbol}, grid -> update_at(grid, {(x - xs), (y - ys)}, symbol) end)
     end
 end
 
@@ -58,6 +76,15 @@ defmodule DaySixTest do
 
         {:ok, data: data, empty_grid: empty_grid}
     end
+    
+    test "try to reduce" do
+        assert [{{0,0}, :A}] |>
+        Enum.reduce([[46]], fn {coord, symbol}, grid -> update_at(grid, coord, symbol) end) == [[:A]]
+    end
+
+    test "should generate a grid with symbols", context do
+        assert build_area_map(context[:data]) == []
+   end
 
     test "should find largest coords", context do
         assert find_largest_x_y(context[:data]) == {90, 122}
@@ -67,12 +94,8 @@ defmodule DaySixTest do
         assert find_smallest_x_y(context[:data]) == {1, 1}
     end
 
-    test "should make a grid" do
-        assert make_grid({1,1},{5,5}) == [[46,46,46,46,46],
-                                            [46,46,46,46,46],
-                                            [46,46,46,46,46],
-                                            [46,46,46,46,46],
-                                            [46,46,46,46,46]]
+    test "should make a grid", context do
+        assert make_grid({1,1},{5,5}) == context[:empty_grid]
     end
 
     test "should update a grid", context do
@@ -82,6 +105,14 @@ defmodule DaySixTest do
                                                                  [46,46,46,46,46],
                                                                  [46,46,46,46,46]]
     end
-        
+
+    test  "should calculate distance" do
+        assert manhatten_distance({9,4}, {3,6}) == 8
+    end
+
+    test "should zip with grid symbols" do
+        coords = [{1,1}, {2,2}, {3,3}]
+        assert generate_symbols(coords) == [{{1, 1}, :AA}, {{2, 2}, :AB}, {{3, 3}, :AC}]
+    end      
 end
 
