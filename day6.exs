@@ -50,12 +50,20 @@ defmodule DaySix do
         Enum.zip(values, some_atoms)
     end
 
+    def calculate_nearest(coords, this_coord) do
+        {result, dist} = coords
+        |> Enum.map(fn coord -> {coord, manhatten_distance(coord, this_coord)} end)
+        |> Enum.min_by(fn {coord, distance} -> distance end)
+        result
+    end
+
     def build_area_map(values) do
         {xs, ys} = find_smallest_x_y(values)
         largest = find_largest_x_y(values)
         grid = make_grid({xs,ys}, largest)
         generate_symbols(values) 
         |> Enum.reduce(grid, fn {{x,y}, symbol}, grid -> update_at(grid, {(x - xs), (y - ys)}, symbol) end)
+        
     end
 end
 
@@ -76,15 +84,19 @@ defmodule DaySixTest do
 
         {:ok, data: data, empty_grid: empty_grid}
     end
-    
+
+    test "should calculate nearest", context do
+        assert calculate_nearest(context[:data], {44, 87}) == {45,90}
+    end
+
     test "try to reduce" do
         assert [{{0,0}, :A}] |>
         Enum.reduce([[46]], fn {coord, symbol}, grid -> update_at(grid, coord, symbol) end) == [[:A]]
     end
 
-    test "should generate a grid with symbols", context do
-        assert build_area_map(context[:data]) == []
-   end
+    #test "should generate a grid with symbols", context do
+    #    assert build_area_map(context[:data]) == []
+    #end
 
     test "should find largest coords", context do
         assert find_largest_x_y(context[:data]) == {90, 122}
