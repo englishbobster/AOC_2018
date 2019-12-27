@@ -60,10 +60,16 @@ defmodule DaySix do
     end
 
     def calculate_nearest(coords_symbol, this_coord) do
-        {result, dist} = coords_symbol
+        results = coords_symbol
         |> Enum.map(fn {coord, _symbol} -> {{coord, _symbol}, manhatten_distance(coord, this_coord)} end)
-        |> Enum.min_by(fn {coord_symbol, distance} -> distance end)
-        result
+        |> Enum.sort_by(fn {coord_symbol, distance} -> distance end, &<=/2)
+        
+        if length(results) > 1 do
+            [{{coords, symbol}, dist},{{coords2, symbol2}, dist2}] = results |> Enum.take(2)
+            if dist == dist2, do: :., else: symbol
+        else
+            [{{coords, symbol}, dist}] = results
+        end
     end
 
     def build_area_map(values) do
@@ -71,18 +77,14 @@ defmodule DaySix do
         {xl, yl} = find_largest_x_y(values)
         grid = make_grid({xs,ys}, {xl,yl})
         values_with_symbols = generate_symbols(values)
-        updated_grid = Enum.reduce(values_with_symbols, grid,
-            fn {{x,y}, symbol}, grid -> update_at(grid, {(x - xs), (y - ys)}, symbol) end)
-
-       for x <- xs..xl, y <- ys..yl, reduce: updated_grid do
+        updated_grid = for x <- xs..xl, y <- ys..yl, reduce: grid do
             acc -> 
-            {{_xn,_yn}, sym} = calculate_nearest(values_with_symbols, {x,y})
-            case get_at(acc, {(x - xs), (y - ys)}) do
-                :empty -> update_at(acc, {(x - xs), (y - ys)}, lower_atom(sym))
-                sym -> acc
-                _ -> update_at(acc, {(x - xs), (y - ys)}, :.)
-            end
-        end
+            sym = calculate_nearest(values_with_symbols, {x,y})
+            update_at(acc, {(x - xs), (y - ys)}, lower_atom(sym))
+       end
+
+       Enum.reduce(values_with_symbols, updated_grid,
+            fn {{x,y}, symbol}, acc -> update_at(acc, {(x - xs), (y - ys)}, symbol) end)
     end
 end
 
@@ -115,7 +117,7 @@ defmodule DaySixTest do
     end
 
     test "should calculate nearest", context do
-        assert calculate_nearest(context[:data_with_symbols], {44, 87}) == {{45,90}, :AC}
+        assert calculate_nearest(context[:data_with_symbols], {44, 87}) == :AC
     end
 
     test "try to reduce" do
