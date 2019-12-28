@@ -61,18 +61,18 @@ defmodule DaySix do
 
     def calculate_nearest(coords_symbol, this_coord) do
         results = coords_symbol
-        |> Enum.map(fn {coord, _symbol} -> {{coord, _symbol}, manhatten_distance(coord, this_coord)} end)
+        |> Enum.map(fn {coord, symbol} -> {{coord, symbol}, manhatten_distance(coord, this_coord)} end)
         |> Enum.sort_by(fn {coord_symbol, distance} -> distance end, &<=/2)
         
         if length(results) > 1 do
-            [{{coords, symbol}, dist},{{coords2, symbol2}, dist2}] = results |> Enum.take(2)
+            [{{coords, symbol}, dist},{{_coords2, _symbol2}, dist2}] = results |> Enum.take(2)
             if dist == dist2, do: :., else: symbol
         else
             [{{coords, symbol}, dist}] = results
         end
     end
 
-    def build_area_map(values) do
+    def build_area_grid(values) do
         {xs, ys} = find_smallest_x_y(values)
         {xl, yl} = find_largest_x_y(values)
         grid = make_grid({xs,ys}, {xl,yl})
@@ -86,6 +86,26 @@ defmodule DaySix do
        Enum.reduce(values_with_symbols, updated_grid,
             fn {{x,y}, symbol}, acc -> update_at(acc, {(x - xs), (y - ys)}, symbol) end)
     end
+
+    def strip_edge_symbols(grid) do
+        y_max = (length(grid) - 1)
+        x_max = (length(Enum.at(grid,0)) - 1)
+
+        top_bottom = Enum.at(grid, 0) ++ Enum.at(grid, y_max)
+        left = 0..y_max |> Enum.reduce([], fn ycoord, acc -> acc ++ [get_at(grid, {0, ycoord})] end)
+        right = 0..y_max |> Enum.reduce([], fn ycoord, acc -> acc ++ [get_at(grid, {x_max, ycoord})] end)
+        to_remove = top_bottom ++ left ++ right |> List.flatten |> Enum.uniq |> Enum.filter(fn atm -> atm != :. end)
+        
+        updated_grid = for x <- 0..x_max, y <- 0..y_max, reduce: grid do
+            acc -> 
+            if Enum.member?(to_remove, get_at(grid, {x,y})) do
+                update_at(acc, {x, y}, :.)
+            else
+                acc
+            end
+       end
+    end
+
 end
 
 
@@ -104,12 +124,36 @@ defmodule DaySixTest do
             [:empty, :empty, :empty, :empty, :empty],
             [:empty, :empty, :empty, :empty, :empty]]
 
+        area_grid = [[:AA, :aa, :aa, :aa, :., :ac, :ac, :ac],
+            [:aa, :aa, :ad, :ad, :ae, :ac, :ac, :ac],
+            [:aa, :ad, :ad, :ad, :ae, :ac, :ac, :AC],
+            [:., :ad, :AD, :ad, :ae, :ae, :ac, :ac],
+            [:ab, :., :ad, :ae, :AE, :ae, :ae, :ac],
+            [:AB, :ab, :., :ae, :ae, :ae, :ae, :.],
+            [:ab, :ab, :., :ae, :ae, :ae, :af, :af],
+            [:ab, :ab, :., :ae, :ae, :af, :af, :af],
+            [:ab, :ab, :., :af, :af, :af, :af, :AF]]
+        
+        stripped_grid = [[:., :., :., :., :., :., :., :.],
+            [:., :., :ad, :ad, :ae, :., :., :.],
+            [:., :ad, :ad, :ad, :ae, :., :., :.],
+            [:., :ad, :AD, :ad, :ae, :ae, :., :.],
+            [:., :., :ad, :ae, :AE, :ae, :ae, :.],
+            [:., :., :., :ae, :ae, :ae, :ae, :.],
+            [:., :., :., :ae, :ae, :ae, :., :.],
+            [:., :., :., :ae, :ae, :., :., :.],
+            [:., :., :., :., :., :., :., :.]]
+
         example = [{1,1}, {1,6}, {8,3}, {3,4}, {5,5}, {8,9}]
-        {:ok, data: data, empty_grid: empty_grid, data_with_symbols: data_with_symbols, example: example}
+        {:ok, data: data, empty_grid: empty_grid, data_with_symbols: data_with_symbols, example: example, area_grid: area_grid, stripped_grid: stripped_grid}
     end
 
     test "should build map", context do
-        assert build_area_map(context[:example]) == []
+        assert build_area_grid(context[:example]) == context[:area_grid]
+    end
+
+    test "should strip edge symbols", context do
+        assert strip_edge_symbols(context[:area_grid]) == context[:stripped_grid]
     end
 
     test "make atom small case" do
