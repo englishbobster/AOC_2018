@@ -1,6 +1,7 @@
 defmodule DaySix do
     def parse_line(ln) do
-        String.split(",")
+        ln
+        |> String.split(",")
         |> Enum.map(fn int_str -> String.trim(int_str) end)
         |> Enum.reduce({}, fn x, acc -> Tuple.append(acc, String.to_integer(x)) end)
     end
@@ -106,6 +107,27 @@ defmodule DaySix do
        end
     end
 
+    def find_largest(grid) do
+        y_max = (length(grid) - 1)
+        flat_grid = 0..y_max |> Enum.reduce([], fn y, acc -> acc ++ Enum.at(grid, y) end) |> 
+        Enum.filter(fn sym -> sym != :. end) |> Enum.map(fn sym -> lower_atom(sym) end) |> List.flatten
+        val_map = Enum.reduce(flat_grid, %{}, fn val, acc -> 
+            cond do
+            get_in(acc, [val]) == nil ->
+                put_in(acc, [val], 1)
+            get_in(acc, [val]) >= 1 ->
+                update_in(acc, [val], &(&1 + 1))
+        end
+        end)
+        val_map |> Map.values |> Enum.max
+    end
+
+    def find_area(values) do
+        build_area_grid(values)
+        |> strip_edge_symbols()
+        |> find_largest()
+    end
+
 end
 
 
@@ -146,6 +168,10 @@ defmodule DaySixTest do
 
         example = [{1,1}, {1,6}, {8,3}, {3,4}, {5,5}, {8,9}]
         {:ok, data: data, empty_grid: empty_grid, data_with_symbols: data_with_symbols, example: example, area_grid: area_grid, stripped_grid: stripped_grid}
+    end
+
+    test "should count the areas and get largest", context do
+        assert find_largest(context[:stripped_grid]) == 17
     end
 
     test "should build map", context do
@@ -204,3 +230,5 @@ defmodule DaySixTest do
     end      
 end
 
+initial = DaySix.load_data("day_6_input.txt")
+IO.puts "Answer ONE: #{initial |> DaySix.find_area}"
