@@ -73,6 +73,11 @@ defmodule DaySix do
         end
     end
 
+    def calculate_sum(values, this_coord) do
+        values
+        |> Enum.reduce(0, fn val, acc -> acc + manhatten_distance(val, this_coord) end)
+    end
+
     def build_area_grid(values) do
         {xs, ys} = find_smallest_x_y(values)
         {xl, yl} = find_largest_x_y(values)
@@ -86,6 +91,23 @@ defmodule DaySix do
 
        Enum.reduce(values_with_symbols, updated_grid,
             fn {{x,y}, symbol}, acc -> update_at(acc, {(x - xs), (y - ys)}, symbol) end)
+    end
+    
+    def build_grid_with_distance_sums(values) do
+        {xs, ys} = find_smallest_x_y(values)
+        {xl, yl} = find_largest_x_y(values)
+        grid = make_grid({xs,ys}, {xl,yl})
+        for x <- xs..xl, y <- ys..yl, reduce: grid do
+            acc ->
+            distance_sum = calculate_sum(values, {x, y})
+            update_at(acc, {(x - xs), (y - ys)}, distance_sum)
+        end
+    end
+
+    def count_region_area(grid) do
+        y_max = (length(grid) - 1)
+        flat_grid = 0..y_max |> Enum.reduce([], fn y, acc -> acc ++ Enum.at(grid, y) end) |> List.flatten
+        flat_grid |> Enum.filter(fn val -> val < 10000 end) |> length
     end
 
     def strip_edge_symbols(grid) do
@@ -126,6 +148,11 @@ defmodule DaySix do
         build_area_grid(values)
         |> strip_edge_symbols()
         |> find_largest()
+    end
+
+    def find_region(values) do
+        build_grid_with_distance_sums(values)
+        |> count_region_area
     end
 
 end
@@ -232,3 +259,4 @@ end
 
 initial = DaySix.load_data("day_6_input.txt")
 IO.puts "Answer ONE: #{initial |> DaySix.find_area}"
+IO.puts "Answer ONE: #{initial |> DaySix.find_region}"
