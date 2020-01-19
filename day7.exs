@@ -43,7 +43,7 @@ defmodule DaySeven do
                 true -> acc ++ [k]
                 false -> acc
             end
-        end)
+        end) |> Enum.sort
     end
 
     def find_ends(dag) do
@@ -52,7 +52,7 @@ defmodule DaySeven do
                 true -> acc ++ [k]
                 false -> acc
             end
-        end)
+        end) |> Enum.sort
     end
 
 end
