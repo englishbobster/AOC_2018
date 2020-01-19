@@ -36,6 +36,25 @@ defmodule DaySeven do
         []
     end
 
+    def find_starts(dag) do
+        all_nodes = Keyword.values(dag) |> List.flatten
+        Enum.reduce(dag, [], fn {k, _v}, acc -> 
+            case not Enum.member?(all_nodes, k) do
+                true -> acc ++ [k]
+                false -> acc
+            end
+        end)
+    end
+
+    def find_ends(dag) do
+        Enum.reduce(dag, [], fn {k, v}, acc ->
+            case Enum.empty?(v) do
+                true -> acc ++ [k]
+                false -> acc
+            end
+        end)
+    end
+
 end
 
 ExUnit.start()
@@ -48,6 +67,14 @@ defmodule DaySevenTest do
         data = [{:C, :A}, {:C, :F}, {:A, :B}, {:A, :D}, {:B, :E}, {:D, :E}, {:F, :E}]
         dag = [C: [:A, :F], A: [:B, :D], B: [:E], D: [:E], F: [:E], E: []]
         {:ok, data: data, dag: dag}
+    end
+
+    test "should find one or more start", context do
+        assert find_starts(context[:dag]) == [:C]
+    end
+
+    test "should find one or more ends", context do
+        assert find_ends(context[:dag]) == [:E]
     end
 
     test "should order steps", context do
