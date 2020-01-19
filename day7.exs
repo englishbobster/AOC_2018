@@ -70,7 +70,8 @@ defmodule DaySevenTest do
     end
 
     test "should find one or more start", context do
-        assert find_starts(context[:dag]) == [:C]
+        # add another start to the setup data
+        assert find_starts(context[:dag] ++ [Z: [:A, :H]]) == [:C, :Z]
     end
 
     test "should find one or more ends", context do
